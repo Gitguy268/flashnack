@@ -20,7 +20,7 @@ Flashnack is a web version of [LoFi Logic](https://github.com/lofilogic/flashbac
 ![The snowy field going through the five looks: Disposable, Point & Shoot, Rangefinder, Monochrome and Flashback Classic](docs/images/looks.webp)
 
 <!-- live-links -->
-**Live:** [gitguy268.github.io/flashnack](https://gitguy268.github.io/flashnack/)
+**Live:** [gitguy268.github.io/flashnack](https://gitguy268.github.io/flashnack/) · [flashnack.vercel.app](https://flashnack.vercel.app)
 <!-- /live-links -->
 
 ## Three steps
