@@ -9,3 +9,4 @@ playwright-report/
 # Never commit photos: they are personal and large.
 *.dng
 *.DNG
+.vercel
