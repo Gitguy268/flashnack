@@ -44,7 +44,9 @@ The render pipeline is a port of [LoFi Logic](https://github.com/lofilogic/flash
    CPU=1 REF_DIR=<out dir> DNG=photo.dng NAME=photo node tests/parity/run-parity.mjs  # CPU renderer
    ```
 
-On 2026-11-09 the four sample DNGs matched within 1e-5 (max absolute error, 0..1 scale) in all five looks on WebGPU, and within 5e-5 on the CPU renderer.
+On 2026-11-09 the four sample DNGs matched within 1e-5 (max absolute error, 0..1 scale) in all five looks on WebGPU, and two of them within 2e-4 on the CPU renderer.
+
+The first run after starting `npm run dev` can be cut off by Vite reloading the page once ("Execution context was destroyed"); run it again.
 
 ## Licence
 

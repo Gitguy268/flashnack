@@ -36,8 +36,8 @@ Exposure, warmth and tint are per photo. **Use on every photo** copies them to t
 | Camera | File | How well |
 |---|---|---|
 | Flashback ONE35 V2 | `.dng` straight from the camera | The main target. Camera-matched colour, identical to LoFi Logic |
-| Flashback ONE35 V1 | the negatives `.zip` from the Flashback app | Same colour matrix as LoFi Logic; Flashnack's own demosaic, so close but not identical |
-| Other cameras | Canon, Nikon, Sony, Fujifilm and other RAWs, other DNGs | Best effort, through LibRaw. Colour is not calibrated per camera |
+| Flashback ONE35 V1 | the negatives `.zip` from the Flashback app | Same colour matrix as LoFi Logic; Flashnack's own demosaic, so close but not identical (checked on a synthetic negative, not on a real V1 roll yet) |
+| Other cameras | Canon, Nikon, Sony, Fujifilm and other RAWs, other DNGs | Best effort, through LibRaw, as in LoFi Logic. Colour is not calibrated per camera. Tested on one Sony ARW; lossy Apple ProRAW DNGs don't open |
 | Any camera | `.jpg`, `.png` | Experimental, as in LoFi Logic. The look goes on top of the camera's own processing |
 
 <details>
@@ -132,9 +132,11 @@ The port is tested pixel for pixel against LoFi Logic's own code (`core.processo
 | Half-size binning | 0, bit-exact with rawpy |
 | Develop with halation | 7 × 10⁻⁷ |
 | Final render, all five looks, WebGPU | 1 × 10⁻⁵ |
-| Final render, CPU renderer | 5 × 10⁻⁵ |
+| Final render, CPU renderer (2 DNGs) | 2 × 10⁻⁴ |
+| V1 negative develop (synthetic negative) | mean 2 × 10⁻³, sharp edges up to 0.2 (different demosaic) |
+| Sony ARW through LibRaw, Disposable look | mean 4 × 10⁻³ on the exported JPEG |
 
-One 8-bit level is 4 × 10⁻³, so the rendered pixels are the desktop app's. The JPEG files themselves differ slightly, because Flashnack encodes with MozJPEG and the desktop app with Pillow. Grain is the exception: both apps place the same grain tiles at random, so grain differs between any two exports. CONTRIBUTING.md has the steps to rerun the check.
+One 8-bit level is 4 × 10⁻³, so for V2 DNGs the rendered pixels are the desktop app's. The JPEG files themselves differ slightly, because Flashnack encodes with MozJPEG and the desktop app with Pillow. Grain is the exception: both apps place the same grain tiles at random, so grain differs between any two exports. CONTRIBUTING.md has the steps to rerun the check.
 </details>
 
 <details>

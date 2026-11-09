@@ -31,9 +31,9 @@ async function open(page, query = '') {
   return errors;
 }
 
-async function addAndWait(page, files) {
+async function addAndWait(page, files, count = files.length) {
   await page.setInputFiles('#pick', files);
-  await page.waitForFunction((n) => window.flashnack.S.photos.length === n && window.flashnack.S.photos.every((p) => p.status === 'ready'), files.length, { timeout: 120_000 });
+  await page.waitForFunction((n) => window.flashnack.S.photos.length === n && window.flashnack.S.photos.every((p) => p.status === 'ready'), count, { timeout: 120_000 });
 }
 
 test('empty state explains what to drop', async ({ page }) => {
@@ -90,4 +90,29 @@ test('phone width has no sideways scrolling', async ({ page }) => {
   await addAndWait(page, samples(2));
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
   expect(overflow).toBeLessThanOrEqual(0);
+});
+
+test('V1 negatives zip develops and exports', async ({ page }) => {
+  const { makeNegative } = await import('../fixtures/make-v1.mjs');
+  const { zipSync } = await import('fflate');
+  const tmp = mkdtempSync(join(tmpdir(), 'flashnack-v1-'));
+  const files = {};
+  for (const i of [1, 2]) {
+    const n = makeNegative({ seed: i });
+    files[`Roll/neg${i}`] = n.mosaic;
+    files[`Roll/neg${i}.json`] = new TextEncoder().encode(n.json);
+  }
+  const zipPath = join(tmp, 'my-roll.zip');
+  writeFileSync(zipPath, zipSync(files));
+  const errors = await open(page);
+  await addAndWait(page, [zipPath], 2);
+  await expect(page.locator('#export')).toHaveText('Export 2 photos');
+  expect(await page.evaluate(() => window.flashnack.S.photos.map((p) => p.kind))).toEqual(['v1', 'v1']);
+  const [dl] = await Promise.all([page.waitForEvent('download'), page.locator('#export').click()]);
+  const zip = unzipSync(new Uint8Array(readFileSync(await dl.path())));
+  const names = Object.keys(zip).sort();
+  expect(names).toHaveLength(2);
+  for (const n of names) expect(n).toMatch(/^FBV1_[0-9a-f]{4}_neg\d_disp\.jpg$/);
+  expect(jpegSize(zip[names[0]])).toEqual({ w: 640, h: 480 });
+  expect(errors).toEqual([]);
 });

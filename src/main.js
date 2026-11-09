@@ -221,11 +221,12 @@ async function addFiles(files) {
 /** Work out the kind, develop a small copy for the thumbnail. */
 async function prepare(p) {
   try {
-    if (p.kind === 'dng') {
+    if (p.kind === 'dng' || p.kind === 'raw') {
+      // Most RAWs are TIFF-based: read Make and BaselineExposure for the exposure anchor.
       const head = await p.file.slice(0, 1024 * 1024).arrayBuffer();
       const meta = await engine.meta(head);
-      p.kind = meta?.isFlashback ? 'v2' : 'raw';
-      p.meta = meta;
+      if (p.kind === 'dng') p.kind = meta?.isFlashback ? 'v2' : 'raw';
+      p.meta = meta || {};
       p.el.querySelectorAll('.frame-print span')[3].textContent = p.kind === 'v2' ? 'V2' : '';
     }
     const dev = await developPhoto(p, { wantSmall: true, wantFull: S.photos[S.cur] === p });

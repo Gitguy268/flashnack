@@ -25,8 +25,8 @@
     --line: #c2c2c2;
     --text: #1d1d1d;
     --dim: #5c5c5c;
-    --accent: #b8741a;
-    --accent-ink: #fff8ec;
+    --accent: #8f5a12;
+    --accent-ink: #fffaf2;
     color-scheme: light;
   }
 }
@@ -119,10 +119,10 @@ button { font: inherit; color: inherit; }
 .empty-help p { margin: 10px 0 0; }
 .empty-help b { color: var(--text); font-weight: 600; }
 .empty-privacy { margin: 22px 0 0; font-size: 13px; color: var(--dim); }
-.file-notice { display: none; width: min(560px, 100%); text-align: center; }
-.is-file .empty-frame { display: none; }
-.is-file .file-notice { display: block; }
-.is-file .app[data-state='empty'] .empty { display: grid; }
+.legal { margin: 14px 0 0; font-size: 12.5px; line-height: 1.5; color: var(--dim); }
+.legal a { color: inherit; text-underline-offset: 2px; }
+.legal a:hover { color: var(--text); }
+.controls .legal { border-bottom: 0; margin: 0; }
 
 .viewer-tools {
   position: absolute; left: 12px; bottom: 12px;

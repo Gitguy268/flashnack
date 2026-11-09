@@ -9,8 +9,27 @@
   <link rel="icon" href="./favicon.svg" type="image/svg+xml">
   <link rel="manifest" href="./manifest.webmanifest">
   <script>if (location.protocol === 'file:') document.documentElement.classList.add('is-file');</script>
+  <!-- Inline, because on file:// pages browsers also block the bundled stylesheet. -->
+  <style>
+    .file-only { display: none; }
+    .is-file body > *:not(.file-only) { display: none !important; }
+    .is-file body { margin: 0; background: #262626; color: #ececec; font: 16px/1.5 system-ui, sans-serif; }
+    .is-file .file-only { display: grid; place-items: center; min-height: 100vh; padding: 16px; box-sizing: border-box; }
+    .file-only div { max-width: 34rem; text-align: center; }
+    .file-only h1 { font-size: 26px; margin: 0 0 12px; }
+    .file-only p { color: #b5b5b5; margin: 0 0 12px; }
+    .file-only a, .file-only b { color: #e8a33d; }
+  </style>
 </head>
 <body>
+  <main class="file-only">
+    <div>
+      <h1>Open Flashnack with start.command</h1>
+      <p>Browsers block this app when <b>index.html</b> is opened straight from a folder.</p>
+      <p>Double-click <b>start.command</b> in the Flashnack folder (or run <code>npm start</code>), and it opens in your browser at http://localhost:5292.</p>
+      <p>Or use the online version at <a href="https://gitguy268.github.io/flashnack/">gitguy268.github.io/flashnack</a>.</p>
+    </div>
+  </main>
   <div class="app" id="app" data-state="empty">
     <header class="bar">
       <h1 class="brand">Flashnack</h1>
@@ -40,10 +59,7 @@
               <p><b>ONE35 V1:</b> develop the roll in the Flashback app, then in the gallery choose Share, then Export negatives. Drop the .zip you get here.</p>
             </details>
             <p class="empty-privacy">Everything happens on this device. Your photos are not uploaded anywhere.</p>
-          </div>
-          <div class="file-notice">
-            <p class="empty-title">Open Flashnack with start.command</p>
-            <p class="empty-sub">Browsers block this app when index.html is opened straight from a folder. Double-click <b>start.command</b> in the Flashnack folder (or run <code>npm start</code>) and it opens in your browser. Or use the online version.</p>
+            <p class="legal">Flashnack is free software under the <a href="https://github.com/Gitguy268/flashnack/blob/main/LICENSE">GPL-3.0</a>, with no warranty. It is a port of <a href="https://github.com/lofilogic/flashback-raw-editor">LoFi Logic</a> and is not made by Flashback. <a href="https://github.com/Gitguy268/flashnack">Source code</a>.</p>
           </div>
         </div>
 
@@ -80,6 +96,7 @@
             <button type="button" class="link" id="reset-look">Reset the look</button>
           </div>
         </details>
+        <p class="legal panel">Flashnack is free software under the <a href="https://github.com/Gitguy268/flashnack/blob/main/LICENSE">GPL-3.0</a>, with no warranty. It is a port of <a href="https://github.com/lofilogic/flashback-raw-editor">LoFi Logic</a> and is not made by Flashback. <a href="https://github.com/Gitguy268/flashnack">Source code</a>.</p>
       </aside>
     </main>
 

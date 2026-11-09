@@ -126,7 +126,11 @@ export function developV1({ mosaic, width, height }, seed = 0) {
     // 16-bit quantisation, as upstream feeds OpenCV a uint16 image.
     lin[i] = Math.trunc(Math.min(1, Math.max(0, (x - V1_BLACK_LEVEL) / (V1_WHITE_LEVEL - V1_BLACK_LEVEL))) * 65535) / 65535;
   }
+  // Upstream demosaics with cv2.COLOR_BayerRG2RGB, which reads the top-left
+  // site of each 2x2 as blue, and its V1 matrix was fitted that way. So the
+  // red and blue planes swap here to match.
   let rgb = demosaicRGGB(lin, width, height);
+  for (let i = 0; i < rgb.length; i += 3) { const t = rgb[i]; rgb[i] = rgb[i + 2]; rgb[i + 2] = t; }
   let [w, h] = [width, height];
   const [tw, th] = fitLongEdge(width, height, V1_TARGET_LONG_EDGE);
   if (tw !== w || th !== h) { rgb = areaResize(rgb, w, h, 3, tw, th); w = tw; h = th; }
