@@ -1,0 +1,7 @@
+# Flashnack
+
+> A web app that develops Flashback ONE35 camera RAW photos (V2 DNG files and V1 negative zips) with film looks, entirely in the browser. A GPL-3.0 port of LoFi Logic's desktop editor.
+
+- Open the page, drop photos, pick one of five looks (Disposable, Point & Shoot, Rangefinder, Monochrome, Flashback Classic), adjust exposure, warmth and tint, export JPEGs as a zip.
+- Photos never leave the device. Rendering uses WebGPU, with a slower CPU fallback.
+- Source: https://github.com/Gitguy268/flashnack

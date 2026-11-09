@@ -1,0 +1,39 @@
+Flashnack
+Copyright (C) 2026 Lucas Van De Weerd
+
+Flashnack is a web port of LoFi Logic (flashback-raw-editor),
+https://github.com/lofilogic/flashback-raw-editor, made by LoFi Logic and
+licensed under the GNU General Public License version 3. Flashnack is
+licensed under the same licence; see LICENSE.
+
+Ported from LoFi Logic (GPL-3.0), each file says what it came from and what
+changed:
+  - the colour pipeline: ForwardMatrix, highlight recovery, white balance and
+    tint, ACEScct, tone curves, V1 negative develop (core/processor.py,
+    core/v1_negative.py, core/config.py)
+  - every render stage and its order (core/processor.py, core/effects.py,
+    core/kernels.py, core/gpu.py)
+  - the WGSL compute shaders in src/gpu/shaders, copied unchanged apart from a
+    header (core/shaders)
+  - the five looks and their settings (core/config.py VIBE_PRESETS)
+  - the 3D LUTs in public/luts, converted from assets/luts/*.cube to binary
+  - the film grain tiles in public/grain (assets/grain)
+  - export file names (core/export_naming.py)
+
+Flashnack is not affiliated with LoFi Logic or with Flashback (joinflashback.co).
+"Flashback" and "ONE35" are names of Flashback's camera products, used here only
+to say which files Flashnack opens.
+
+Third-party software bundled in the built app:
+  - fflate 0.8.2 by Arjun Barrett, MIT licence
+  - @jsquash/jpeg 1.6.0 by Jamie Sinclair, Apache-2.0; contains MozJPEG
+    (IJG licence, Modified BSD and zlib licences)
+  - libraw-wasm 1.5.0 by ybouane, ISC licence; contains LibRaw
+    (LGPL-2.1 or CDDL-1.0, https://www.libraw.org) and Little CMS (MIT).
+    LibRaw runs as its own WebAssembly file (libraw-*.wasm) that can be
+    replaced; its source is at https://github.com/LibRaw/LibRaw and the
+    wrapper's at https://github.com/ybouane/LibRaw-Wasm
+  - Archivo variable font by Omnibus-Type, SIL Open Font License 1.1, via
+    @fontsource-variable/archivo
+
+Development tools (not shipped): Vite, Vitest, Playwright (Apache-2.0).

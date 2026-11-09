@@ -1,0 +1,11 @@
+node_modules/
+dist/
+test-results/
+playwright-report/
+.vite/
+.DS_Store
+.env
+.env.*
+# Never commit photos: they are personal and large.
+*.dng
+*.DNG

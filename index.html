@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Flashnack</title>
+  <meta name="description" content="Develop Flashback ONE35 RAW photos in your browser with film looks. Drop a roll, pick a look, export. Your photos never leave your device.">
+  <meta name="theme-color" content="#262626">
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <script>if (location.protocol === 'file:') document.documentElement.classList.add('is-file');</script>
+</head>
+<body>
+  <div class="app" id="app" data-state="empty">
+    <header class="bar">
+      <h1 class="brand">Flashnack</h1>
+      <p class="bar-count" id="count" aria-live="polite"></p>
+      <div class="bar-actions">
+        <button type="button" class="btn" id="add">Add photos</button>
+        <button type="button" class="btn btn-primary" id="export" disabled>Export</button>
+      </div>
+    </header>
+
+    <main class="stage">
+      <section class="viewer" id="viewer" aria-label="Photo">
+        <canvas id="view" tabindex="0" aria-label="Preview of the current photo"></canvas>
+
+        <div class="empty" id="empty">
+          <div class="empty-frame">
+            <p class="empty-title">Drop your Flashback photos here</p>
+            <p class="empty-sub">DNG files from the ONE35 V2, the negatives .zip from the V1, or JPEGs.</p>
+            <div class="empty-actions">
+              <button type="button" class="btn btn-primary" id="choose">Choose photos</button>
+              <button type="button" class="btn" id="choose-dir">Choose a folder</button>
+            </div>
+            <p class="empty-try">No photos at hand? <button type="button" class="link" id="try-samples">Try two sample photos</button></p>
+            <details class="empty-help">
+              <summary>Where do I find my photos?</summary>
+              <p><b>ONE35 V2:</b> plug the camera in over USB before you develop the roll in the Flashback app, and open the DNG files on it. Developing in the app first clears them off the camera.</p>
+              <p><b>ONE35 V1:</b> develop the roll in the Flashback app, then in the gallery choose Share, then Export negatives. Drop the .zip you get here.</p>
+            </details>
+            <p class="empty-privacy">Everything happens on this device. Your photos are not uploaded anywhere.</p>
+          </div>
+          <div class="file-notice">
+            <p class="empty-title">Open Flashnack with start.command</p>
+            <p class="empty-sub">Browsers block this app when index.html is opened straight from a folder. Double-click <b>start.command</b> in the Flashnack folder (or run <code>npm start</code>) and it opens in your browser. Or use the online version.</p>
+          </div>
+        </div>
+
+        <div class="viewer-tools" id="tools">
+          <button type="button" class="tool" id="rotate" title="Rotate (R)">Rotate</button>
+          <button type="button" class="tool" id="compare" title="Hold to see the photo without the look (hold Space)">Hold to compare</button>
+          <button type="button" class="tool" id="zen" title="Full screen, edit by dragging (Z)">Full screen</button>
+          <span class="zoom" id="zoom"></span>
+        </div>
+        <p class="viewer-note" id="note" role="status" aria-live="polite"></p>
+        <div class="zen-hint" id="zen-hint">Drag up or down for exposure, left or right for warmth, right-drag for tint. Arrow keys move between photos. Esc to leave.</div>
+      </section>
+
+      <aside class="controls" id="controls" aria-label="Edit">
+        <section class="panel">
+          <h2 class="panel-title">Look</h2>
+          <div class="looks" id="looks" role="radiogroup" aria-label="Look"></div>
+        </section>
+
+        <section class="panel" id="basic">
+          <h2 class="panel-title">This photo</h2>
+          <div class="sliders" id="sliders"></div>
+          <div class="panel-actions">
+            <button type="button" class="link" id="apply-all">Use on every photo</button>
+            <button type="button" class="link" id="reset-photo">Reset</button>
+          </div>
+        </section>
+
+        <details class="panel finetune" id="finetune">
+          <summary class="panel-title">Fine-tune the look</summary>
+          <p class="panel-sub">Changes apply to every photo using this look.</p>
+          <div class="sliders" id="look-sliders"></div>
+          <div class="panel-actions">
+            <button type="button" class="link" id="reset-look">Reset the look</button>
+          </div>
+        </details>
+      </aside>
+    </main>
+
+    <footer class="strip" id="strip-wrap">
+      <ol class="strip-frames" id="strip" aria-label="Photos in this roll"></ol>
+    </footer>
+  </div>
+
+  <div class="drop-veil" id="drop-veil"><p>Drop to add to the roll</p></div>
+  <div class="progress" id="progress" hidden>
+    <p id="progress-text"></p>
+    <div class="progress-bar"><div id="progress-fill"></div></div>
+    <button type="button" class="link" id="progress-cancel">Cancel</button>
+  </div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <input type="file" id="pick" multiple hidden accept=".dng,.DNG,.zip,.jpg,.jpeg,.png,.cr2,.cr3,.nef,.arw,.raf,.orf,.rw2,.pef,.srw,.raw,.json,image/*">
+  <input type="file" id="pick-dir" webkitdirectory multiple hidden>
+
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>

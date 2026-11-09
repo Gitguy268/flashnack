@@ -1,0 +1,53 @@
+name: Bug report
+description: Something in Flashnack does not work.
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened
+      description: What you did, what you expected and what you got instead.
+    validations:
+      required: true
+  - type: dropdown
+    id: files
+    attributes:
+      label: Kind of photo
+      options:
+        - Flashback ONE35 V2 DNG
+        - Flashback ONE35 V1 negatives zip
+        - Other camera RAW
+        - JPEG or PNG
+        - Not about a photo
+    validations:
+      required: true
+  - type: dropdown
+    id: renderer
+    attributes:
+      label: Renderer
+      description: Flashnack shows "rendering on the CPU" at the bottom of the photo when it is not using WebGPU.
+      options:
+        - WebGPU (no CPU note)
+        - CPU
+        - Don't know
+  - type: dropdown
+    id: browser
+    attributes:
+      label: Browser
+      options: [Chrome, Edge, Brave, Safari, Firefox, Other]
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: OS
+      options: [macOS, Windows, Linux, iOS, Android, Other]
+    validations:
+      required: true
+  - type: textarea
+    id: console
+    attributes:
+      label: Console errors
+      description: Open the browser's developer tools (Console tab) and paste any red lines.
+      render: text

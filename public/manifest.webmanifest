@@ -1,0 +1,10 @@
+{
+  "name": "Flashnack",
+  "short_name": "Flashnack",
+  "description": "Develop Flashback ONE35 RAW photos in your browser with film looks.",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#262626",
+  "theme_color": "#262626",
+  "icons": [{ "src": "favicon.svg", "sizes": "any", "type": "image/svg+xml" }]
+}
