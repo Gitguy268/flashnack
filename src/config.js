@@ -128,6 +128,9 @@ export function defaultVibe() {
 
     base_exposure_offset_v2: BASE_EXPOSURE_OFFSET_V2,
     lut: '',
+    // Film look (Flashnack addition): a display LUT applied after the tone curve.
+    film_lut: '',
+    film_strength_pct: 100,
   };
 }
 
@@ -180,6 +183,29 @@ export function vibeConfigFor(id) {
   cfg.base_exposure_offset_v2 = p.base_exposure_offset_v2 ?? BASE_EXPOSURE_OFFSET_V2;
   return cfg;
 }
+
+// ---- film looks (Flashnack addition) ------------------------------------------------
+// A film look is a catalog LUT on the plain tone curve, with the effects of the
+// closest original look (catalog "fx"), a little gentler since the LUT already
+// carries the colour.
+const FILM_FX_SCALE = { grain_strength_pct: 0.8, vignette_strength_pct: 0.8, bloom_strength_pct: 0.8 };
+
+export const isVibe = (id) => Object.hasOwn(VIBE_PRESETS, id);
+
+/** Settings for any look id: one of the five originals or a catalog film look. */
+export function lookConfigFor(id, film) {
+  if (isVibe(id)) return vibeConfigFor(id);
+  const cfg = vibeConfigFor(film && isVibe(film.fx) ? film.fx : 'rangefinder');
+  for (const [k, s] of Object.entries(FILM_FX_SCALE)) cfg[k] *= s;
+  cfg.lut = '';
+  cfg.base_exposure_offset_v2 = BASE_EXPOSURE_OFFSET_V2;
+  cfg.film_lut = id;
+  cfg.film_strength_pct = 100;
+  return cfg;
+}
+
+/** Short tag for export file names. */
+export const lookExportSuffix = (id) => VIBE_EXPORT_SUFFIX[id] || id.replace(/^(fb|t3|rt|ig|own)-/, '');
 
 // Grain highlight bias moves with push/pull (upstream _grain_highlight_bias).
 export function grainHighlightBias(filmEvDriver) {

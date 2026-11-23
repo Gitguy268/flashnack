@@ -14,6 +14,7 @@ import { gaussKernel, expKernel, pyRound } from './kernels.js';
 
 import encodeSrc from './shaders/encode_tex.wgsl?raw';
 import lutSrc from './shaders/lut_tex.wgsl?raw';
+import displayLutSrc from './shaders/display_lut_tex.wgsl?raw';
 import gaussSrc from './shaders/gaussian_blur_tex.wgsl?raw';
 import downSrc from './shaders/downsample_tex.wgsl?raw';
 import discSrc from './shaders/disc_blur_tex.wgsl?raw';
@@ -42,6 +43,7 @@ const PIPELINES = [
   // [name, source, layout spec, entry points]
   ['encode', encodeSrc, 'TS', ['main']],
   ['lut', lutSrc, 'TRSU', ['main']],
+  ['dlut', displayLutSrc, 'TRSU', ['main']],
   ['gauss', gaussSrc, 'TRS', ['main_h', 'main_v']],
   ['down', downSrc, 'TS', ['main']],
   ['disc', discSrc, 'TSU', ['main']],
@@ -401,6 +403,8 @@ export class Renderer {
     this.luts.set(id, buf);
   }
 
+  dropLut(id) { this.luts.get(id)?.destroy(); this.luts.delete(id); }
+
   // ---- image setup (processor.load_image / _bake_halation) ------------------------
 
   /**
@@ -428,6 +432,14 @@ export class Renderer {
   }
   hasLut(id) { return !!id && this.luts.has(id); }
   lutStage(f, id) { const buf = this.luts.get(id); return this.lut(f, buf, buf.lutSize); }
+  /** Display LUT (sRGB in and out) blended with the input by strength 0..1. */
+  displayLut(f, id, strength) {
+    const buf = this.luts.get(id), dst = this.tex(f.w, f.h);
+    const b = new ArrayBuffer(16), dv = new DataView(b);
+    dv.setUint32(0, buf.lutSize, true); dv.setFloat32(4, strength, true);
+    this._run('dlut.main', [f, buf, dst, this._uniform(new Uint8Array(b))], f.w, f.h);
+    return dst;
+  }
   tone(f) {
     const dst = this.tex(f.w, f.h);
     this._run('tone.main', [f, this.toneCurveBuf, dst, this.toneUniform], f.w, f.h);

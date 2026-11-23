@@ -1,6 +1,6 @@
 {
   "name": "flashnack",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "Develop Flashback ONE35 RAW photos in your browser with film looks. A web port of LoFi Logic.",
   "license": "GPL-3.0-only",
@@ -10,6 +10,8 @@
     "build": "vite build",
     "preview": "vite preview --port 5292",
     "luts": "node scripts/convert-luts.mjs",
+    "luts:cssgram": "node scripts/render-cssgram.mjs .lut-src/CSSgram .lut-src/cssgram-out",
+    "luts:build": "node scripts/build-luts.mjs",
     "test": "vitest run",
     "e2e": "playwright test",
     "start": "vite build && vite preview --port 5292 --open"
@@ -18,10 +20,12 @@
     "@fontsource-variable/archivo": "5.3.0",
     "@jsquash/jpeg": "1.6.0",
     "fflate": "0.8.2",
-    "libraw-wasm": "1.6.0"
+    "libraw-wasm": "1.6.0",
+    "three": "0.187.0"
   },
   "devDependencies": {
     "@playwright/test": "1.64.0",
+    "pngjs": "7.0.0",
     "vite": "8.3.8",
     "vitest": "5.1.0"
   },

@@ -8,6 +8,7 @@ const images = new Map();
 self.onmessage = ({ data: m }) => {
   try {
     if (m.op === 'lut') b.setLut(m.lutId, m.table, m.size);
+    else if (m.op === 'droplut') b.dropLut(m.lutId);
     else if (m.op === 'grain') b.setGrainTiles(m.tiles);
     else if (m.op === 'set') images.set(m.key, { develop: { data: m.data, w: m.w, h: m.h }, baked: null, bakedKey: null, isJpeg: m.isJpeg });
     else if (m.op === 'drop') images.delete(m.key);

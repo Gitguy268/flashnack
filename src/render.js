@@ -36,7 +36,7 @@ export function bakeFrame(b, img, vibe, rotation = 0) {
 
 /**
  * Render the baked intermediate to display sRGB, 0..1.
- * opts: { lutId, seed, preview: {w, h} | null, plain: bool (no look, for compare) }
+ * opts: { lutId, filmLutId, seed, preview: {w, h} | null, plain: bool (no look, for compare) }
  * Returns a frame the caller releases with b.release().
  */
 export function renderFrame(b, img, vibe, adj, opts = {}) {
@@ -72,6 +72,10 @@ export function renderFrame(b, img, vibe, adj, opts = {}) {
   }
 
   f = lut ? b.lutStage(b.encode(f), lut) : b.tone(f);
+  // Film look LUTs (Flashback app, film stocks, eras) work on display sRGB, after the tone curve.
+  const film = !opts.plain && opts.filmLutId && b.hasLut(opts.filmLutId) ? opts.filmLutId : null;
+  const filmStrength = pct(v.film_strength_pct ?? 100);
+  if (film && filmStrength > 0) f = b.displayLut(f, film, Math.min(1, filmStrength));
 
   if (effects) {
     if (v.enable_chromatic_aberration && v.ca_pixels > 0) f = b.ca(f, caPixelsToScale(v.ca_pixels * spatial, Math.max(f.w, f.h)));

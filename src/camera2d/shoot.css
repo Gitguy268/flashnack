@@ -1,0 +1,138 @@
+/* Flashnack - SPDX-License-Identifier: GPL-3.0-only
+   Camera mode: a moulded plastic camera body drawn with CSS. */
+.shoot {
+  position: fixed; inset: 0; z-index: 50;
+  display: grid; place-items: center;
+  background: radial-gradient(120% 80% at 50% 20%, #3a3a3c, #121213);
+  --ink: #f2f2ef; --ink-dim: rgba(242, 242, 239, 0.62);
+  --mould-hi: rgba(255, 255, 255, 0.12); --mould-lo: rgba(0, 0, 0, 0.45);
+  --recess: #0d0d0e; --grey: #d3d3ce;
+  -webkit-user-select: none; user-select: none;
+}
+.shoot[hidden] { display: none; }
+.shoot.shoot-light { --ink: #1c1c1e; --ink-dim: rgba(28, 28, 30, 0.6); --mould-hi: rgba(255, 255, 255, 0.7); --mould-lo: rgba(0, 0, 0, 0.18); }
+
+.sh-body {
+  position: relative; overflow: hidden;
+  width: min(480px, 100vw); height: min(940px, 100dvh);
+  display: grid; grid-template-rows: auto 1fr auto auto auto; gap: 14px;
+  padding: max(16px, env(safe-area-inset-top)) 18px max(14px, env(safe-area-inset-bottom));
+  background:
+    radial-gradient(140% 60% at 30% 0%, var(--mould-hi), transparent 60%),
+    linear-gradient(180deg, color-mix(in srgb, var(--body) 92%, white), var(--body) 30%, color-mix(in srgb, var(--body) 88%, black));
+  border-radius: 34px;
+  box-shadow: inset 0 2px 1px var(--mould-hi), inset 0 -3px 2px var(--mould-lo), 0 30px 80px rgba(0, 0, 0, 0.55);
+  color: var(--ink); font: 500 14px/1.3 var(--font, system-ui);
+}
+@media (max-width: 520px) { .sh-body { border-radius: 0; height: 100dvh; } }
+.shoot-crystal .sh-body {
+  background:
+    radial-gradient(140% 60% at 30% 0%, rgba(255, 255, 255, 0.35), transparent 60%),
+    repeating-linear-gradient(115deg, rgba(255, 255, 255, 0.06) 0 14px, rgba(255, 255, 255, 0.0) 14px 30px),
+    linear-gradient(180deg, rgba(220, 230, 236, 0.55), rgba(150, 165, 175, 0.5));
+  backdrop-filter: blur(6px);
+}
+/* The diagonal band, behind the controls. */
+.sh-band {
+  position: absolute; top: -10%; bottom: -10%; left: 18%; width: 26%;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--band) 85%, black), var(--band) 14%, var(--band) 86%, color-mix(in srgb, var(--band) 80%, black));
+  transform: skewX(-14deg); pointer-events: none; opacity: 0.96;
+}
+.sh-body > :not(.sh-band) { position: relative; }
+
+/* ---- top row ---- */
+.sh-top { display: flex; align-items: center; gap: 10px; }
+.sh-flash { display: flex; align-items: center; gap: 8px; background: none; border: 0; padding: 4px; cursor: pointer; color: var(--ink); }
+.sh-slot { position: relative; width: 58px; height: 24px; border-radius: 7px; background: var(--recess); box-shadow: inset 0 2px 3px rgba(0, 0, 0, 0.8); }
+.sh-knob {
+  position: absolute; top: 3px; left: 3px; width: 26px; height: 18px; border-radius: 5px;
+  background: repeating-linear-gradient(90deg, #e2e2dd 0 3px, #a9a9a4 3px 4px);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.6) inset, 0 2px 3px rgba(0, 0, 0, 0.5);
+  transition: left 0.12s ease;
+}
+.sh-flash[aria-pressed='true'] .sh-knob { left: 29px; }
+.sh-flash[aria-pressed='true'] .sh-label::after { content: ' on'; color: #ff5a3c; }
+.sh-label { font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-dim); }
+.sh-lcd {
+  position: relative; margin-left: auto; padding: 3px 9px; min-width: 52px; text-align: center;
+  border-radius: 6px; background: #a9b4a1; color: #1d241b;
+  font: 700 24px/1 ui-monospace, Menlo, monospace;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.45), 0 0 0 3px var(--recess);
+}
+.sh-lcd-ghost { position: absolute; inset: 3px 9px; color: rgba(29, 36, 27, 0.1); }
+.sh-pill {
+  border: 0; border-radius: 999px; padding: 7px 13px; cursor: pointer;
+  background: linear-gradient(180deg, #ececea, #c9c9c4); color: #1c1c1e; font-weight: 650; font-size: 13px;
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.35), inset 0 1px 0 #fff;
+}
+.sh-pill:active { transform: translateY(1px); box-shadow: 0 1px 0 rgba(0, 0, 0, 0.35); }
+.sh-done { background: linear-gradient(180deg, color-mix(in srgb, var(--band) 80%, white), var(--band)); }
+
+/* ---- viewfinder ---- */
+.sh-finder {
+  min-height: 0; border-radius: 22px; overflow: hidden; background: #050505;
+  box-shadow: inset 0 0 0 5px var(--recess), 0 2px 0 var(--mould-hi), 0 -2px 0 var(--mould-lo);
+}
+.sh-finder video { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.sh-canvas { position: absolute; inset: 5px; width: calc(100% - 10px); height: calc(100% - 10px); border-radius: 18px; display: block; }
+.sh-frame { position: absolute; inset: 14%; border: 1px solid rgba(255, 255, 255, 0.35); border-radius: 4px; pointer-events: none; }
+.sh-frame::before, .sh-frame::after { content: ''; position: absolute; left: 50%; top: 50%; background: rgba(255, 255, 255, 0.45); }
+.sh-frame::before { width: 18px; height: 1px; margin-left: -9px; }
+.sh-frame::after { width: 1px; height: 18px; margin-top: -9px; }
+.sh-msg { position: absolute; left: 16px; right: 16px; bottom: 14px; margin: 0; text-align: center; color: #fff; font-size: 14px; text-shadow: 0 1px 3px #000; }
+.sh-white { position: fixed; inset: 0; background: #fff; opacity: 0; pointer-events: none; transition: opacity 0.08s; }
+.sh-white.on { opacity: 1; }
+.sh-blink .sh-canvas { opacity: 0; }
+.sh-is-blind .sh-canvas, .sh-is-blind .sh-frame { visibility: hidden; }
+.sh-is-blind .sh-finder::after { content: 'No screen. Develop the roll to see your photos.'; position: absolute; inset: 0; display: grid; place-items: center; color: #777; font-size: 14px; padding: 24px; text-align: center; }
+
+/* ---- look dial ---- */
+.sh-dial-row { display: flex; justify-content: center; }
+.sh-dial {
+  position: relative; width: min(330px, 100%); height: 50px; border-radius: 12px; cursor: ew-resize; touch-action: none;
+  background: var(--recess); box-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.8), 0 1px 0 var(--mould-hi);
+  display: grid; place-items: center; overflow: hidden;
+}
+.sh-dial-knurl {
+  position: absolute; inset: 6px 6px; border-radius: 8px;
+  background:
+    linear-gradient(90deg, rgba(0, 0, 0, 0.75), transparent 22%, transparent 78%, rgba(0, 0, 0, 0.75)),
+    repeating-linear-gradient(90deg, #8f8f8a 0 3px, #e6e6e1 3px 7px, #b3b3ae 7px 14px);
+  transition: background-position 0.15s ease;
+}
+.sh-dial-name {
+  position: relative; padding: 3px 12px; border-radius: 6px; font-weight: 700; font-size: 13.5px;
+  background: rgba(13, 13, 14, 0.88); color: #f3f3ef; white-space: nowrap; max-width: 80%; overflow: hidden; text-overflow: ellipsis;
+}
+.sh-dial:focus-visible, .sh-ev:focus-visible, .sh-winder:focus-visible { outline: 2px solid var(--band); outline-offset: 3px; }
+
+/* ---- bottom row ---- */
+.sh-bottom { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 12px; }
+.sh-ev, .sh-winder { display: flex; align-items: center; gap: 8px; cursor: ns-resize; touch-action: none; }
+.sh-winder { justify-content: flex-end; flex-direction: row-reverse; }
+.sh-wheel {
+  width: 30px; height: 84px; border-radius: 10px;
+  background:
+    linear-gradient(180deg, rgba(0, 0, 0, 0.7), transparent 30%, transparent 70%, rgba(0, 0, 0, 0.7)),
+    repeating-linear-gradient(180deg, #e6e6e1 0 4px, #8f8f8a 4px 6px);
+  box-shadow: 0 0 0 4px var(--recess), inset 0 0 4px rgba(0, 0, 0, 0.5);
+}
+.sh-ev-val, .sh-wind-label { font: 700 13px ui-monospace, Menlo, monospace; color: var(--ink-dim); min-width: 3ch; }
+.sh-need-wind .sh-wind-label { color: var(--band); }
+.sh-need-wind .sh-winder .sh-wheel { box-shadow: 0 0 0 4px var(--recess), 0 0 0 7px var(--band); }
+.sh-nudge { animation: sh-nudge 0.4s; }
+@keyframes sh-nudge { 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+.sh-shutter {
+  width: 92px; height: 92px; border-radius: 50%; border: 0; padding: 9px; cursor: pointer;
+  background: var(--recess); box-shadow: inset 0 3px 6px rgba(0, 0, 0, 0.9), 0 1px 0 var(--mould-hi);
+}
+.sh-shutter span {
+  display: block; width: 100%; height: 100%; border-radius: 50%;
+  background: radial-gradient(70% 70% at 40% 30%, color-mix(in srgb, var(--grey) 70%, white), var(--grey) 60%, #a5a5a0);
+  box-shadow: 0 5px 0 #7d7d78, 0 7px 10px rgba(0, 0, 0, 0.5);
+  transition: transform 0.06s, box-shadow 0.06s;
+}
+.sh-shutter.down span, .sh-shutter:active span { transform: translateY(4px); box-shadow: 0 1px 0 #7d7d78, 0 2px 4px rgba(0, 0, 0, 0.5); }
+.sh-need-wind .sh-shutter span { filter: saturate(0.4) brightness(0.85); }
+.sh-blind { justify-self: center; font-size: 12.5px; color: var(--ink-dim); display: flex; gap: 6px; align-items: center; cursor: pointer; }
+@media (max-height: 640px) { .sh-wheel { height: 60px; } .sh-shutter { width: 74px; height: 74px; } .sh-body { gap: 10px; } }

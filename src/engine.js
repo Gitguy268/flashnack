@@ -8,6 +8,11 @@ import { areaResize, fitLongEdge } from './decode/resize.js';
 
 const SMALL_LONG_EDGE = 360;
 import { GRAIN_TILE_SCALE, effectiveLut } from './config.js';
+import { tilesToTable } from './looks/lut-format.js';
+import { filmLutUrl } from './looks/catalog.js';
+
+// Film look LUTs kept on the GPU at once (64³ floats are 3 MB each).
+const FILM_LUTS_KEPT = 12;
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -38,7 +43,9 @@ class WorkerRpc {
 }
 
 async function loadPngPixels(url) {
-  const blob = await (await fetch(url)).blob();
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`${url}: ${res.status}`);
+  const blob = await res.blob();
   const bmp = await createImageBitmap(blob, { colorSpaceConversion: 'none', premultiplyAlpha: 'none' });
   const c = new OffscreenCanvas(bmp.width, bmp.height);
   const ctx = c.getContext('2d', { willReadFrequently: true });
@@ -65,6 +72,32 @@ export class Engine {
   constructor() {
     this.lutTables = new Map();
     this.lutLoading = new Map();
+    this.filmLoading = new Map(); // film look id -> promise, in use order (oldest first)
+  }
+
+  /** Make sure a film look LUT (a 64³ tile PNG) is loaded. Returns the backend id, or null. */
+  async ensureFilmLut(id) {
+    if (!id) return null;
+    const key = `film:${id}`;
+    let job = this.filmLoading.get(key);
+    if (job) { this.filmLoading.delete(key); this.filmLoading.set(key, job); } // most recent last
+    else {
+      job = (async () => {
+        const { d, w, h } = await loadPngPixels(filmLutUrl(id));
+        const { table, size } = tilesToTable(d, w, h);
+        if (this.gpu) this.gpu.setLut(key, table, size);
+        else await this.cpu.call({ op: 'lut', lutId: key, table, size }, [table.buffer]);
+      })();
+      job.catch(() => this.filmLoading.delete(key));
+      this.filmLoading.set(key, job);
+      while (this.filmLoading.size > FILM_LUTS_KEPT) {
+        const [old] = this.filmLoading.keys();
+        this.filmLoading.delete(old);
+        if (this.gpu) this.gpu.dropLut(old); else this.cpu.call({ op: 'droplut', lutId: old });
+      }
+    }
+    await job;
+    return key;
   }
 
   async _loadGrain() {
@@ -162,8 +195,8 @@ export class Engine {
    * Returns a frame for present()/pixels(); release() it when done.
    */
   async draw(img, vibe, adj, opts = {}) {
-    const lutId = await this.ensureLut(vibe.lut, opts.isV1);
-    const o = { lutId, seed: opts.seed, plain: opts.plain, preview: opts.preview, previewScale: opts.previewScale };
+    const [lutId, filmLutId] = await Promise.all([this.ensureLut(vibe.lut, opts.isV1), this.ensureFilmLut(vibe.film_lut)]);
+    const o = { lutId, filmLutId, seed: opts.seed, plain: opts.plain, preview: opts.preview, previewScale: opts.previewScale };
     if (this.gpu) {
       this.gpu.bake(img, vibe, adj.rotation || 0);
       if (o.previewScale) o.preview = { w: Math.max(1, Math.round(img.baked.w * o.previewScale)), h: Math.max(1, Math.round(img.baked.h * o.previewScale)) };

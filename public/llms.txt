@@ -3,5 +3,7 @@
 > A web app that develops Flashback ONE35 camera RAW photos (V2 DNG files and V1 negative zips) with film looks, entirely in the browser. A GPL-3.0 port of LoFi Logic's desktop editor.
 
 - Open the page, drop photos, pick one of five looks (Disposable, Point & Shoot, Rangefinder, Monochrome, Flashback Classic), adjust exposure, warmth and tint, export JPEGs as a zip.
+- Also: the six Flashback app looks, popular film looks (Portra 400, Gold 200, Superia 400, Tri-X, Polaroid…) that work offline, and a search over 359 film and era looks (60s, 70s, 80s, 90s, y2k, 2010s, polaroid, disposable, b&w).
+- Camera mode shoots with the device camera through a Flashback-style body with a live look preview; a 3D model of the ONE35 V2 can be turned and its shutter, flash and winder used.
 - Photos never leave the device. Rendering uses WebGPU, with a slower CPU fallback.
 - Source: https://github.com/Gitguy268/flashnack

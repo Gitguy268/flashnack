@@ -35,6 +35,7 @@
       <h1 class="brand">Flashnack</h1>
       <p class="bar-count" id="count" aria-live="polite"></p>
       <div class="bar-actions">
+        <button type="button" class="btn" id="shoot" title="Take photos with this device's camera">Shoot</button>
         <button type="button" class="btn" id="add">Add photos</button>
         <button type="button" class="btn btn-primary" id="export" disabled>Export</button>
       </div>
@@ -46,13 +47,16 @@
 
         <div class="empty" id="empty">
           <div class="empty-frame">
+            <button type="button" class="cam3d-mini" id="cam3d-mini" aria-label="Look around the Flashback ONE35 V2 in 3D">
+              <span class="cam3d-hint">Drag to turn · click to open</span>
+            </button>
             <p class="empty-title">Drop your Flashback photos here</p>
             <p class="empty-sub">DNG files from the ONE35 V2, the negatives .zip from the V1, or JPEGs.</p>
             <div class="empty-actions">
               <button type="button" class="btn btn-primary" id="choose">Choose photos</button>
               <button type="button" class="btn" id="choose-dir">Choose a folder</button>
             </div>
-            <p class="empty-try">No photos at hand? <button type="button" class="link" id="try-samples">Try two sample photos</button></p>
+            <p class="empty-try">No photos at hand? <button type="button" class="link" id="try-samples">Try two sample photos</button> or <button type="button" class="link" id="shoot-empty">shoot some with your camera</button>.</p>
             <details class="empty-help">
               <summary>Where do I find my photos?</summary>
               <p><b>ONE35 V2:</b> plug the camera in over USB before you develop the roll in the Flashback app, and open the DNG files on it. Developing in the app first clears them off the camera.</p>
@@ -75,8 +79,21 @@
 
       <aside class="controls" id="controls" aria-label="Edit">
         <section class="panel">
-          <h2 class="panel-title">Look</h2>
+          <h2 class="panel-title">Look <span class="look-current" id="look-current"></span></h2>
           <div class="looks" id="looks" role="radiogroup" aria-label="Look"></div>
+          <h3 class="looks-sub">Flashback app</h3>
+          <div class="looks looks-grid" id="looks-flashback" role="radiogroup" aria-label="Flashback app looks"></div>
+          <h3 class="looks-sub">Popular film <span class="looks-note">works offline</span></h3>
+          <div class="looks looks-grid" id="looks-popular" role="radiogroup" aria-label="Popular film looks"></div>
+          <div class="look-search">
+            <label class="looks-sub" for="look-search">More looks</label>
+            <input type="search" id="look-search" class="search" autocomplete="off" spellcheck="false">
+            <div class="look-chips" id="look-chips" aria-label="Search for"></div>
+            <p class="look-count" id="look-count" aria-live="polite"></p>
+            <div class="looks looks-grid" id="look-results" role="radiogroup" aria-label="Search results"></div>
+            <button type="button" class="link" id="look-more" hidden>Show more</button>
+          </div>
+          <div class="sliders" id="film-strength" hidden></div>
         </section>
 
         <section class="panel" id="basic">
@@ -104,6 +121,17 @@
       <ol class="strip-frames" id="strip" aria-label="Photos in this roll"></ol>
     </footer>
   </div>
+
+  <dialog class="cam3d" id="cam3d" aria-label="Flashback ONE35 V2 in 3D">
+    <div class="cam3d-stage" id="cam3d-stage"></div>
+    <div class="cam3d-ui">
+      <p class="cam3d-title">ONE35 V2</p>
+      <div class="cam3d-colours" id="cam3d-colours" role="radiogroup" aria-label="Colour"></div>
+      <p class="cam3d-help">Drag to turn, scroll to zoom. Press the shutter, slide the flash switch, roll the winder.</p>
+      <button type="button" class="btn" id="cam3d-close">Close</button>
+    </div>
+  </dialog>
+  <div class="shoot" id="shoot-view" hidden></div>
 
   <div class="drop-veil" id="drop-veil"><p>Drop to add to the roll</p></div>
   <div class="progress" id="progress" hidden>

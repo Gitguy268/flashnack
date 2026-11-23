@@ -22,6 +22,26 @@ changed:
   - the film grain tiles in public/grain (assets/grain)
   - export file names (core/export_naming.py)
 
+Film looks added in Flashnack 0.2.0 (public/luts/look, details in
+public/luts/LICENSES/README.md):
+  - fb-*.png: the six looks of the Flashback camera app (Gold, Classic, Dispo,
+    Beta, Cine, Retro Haze). They are Flashback's own work, copied unchanged,
+    and are not covered by Flashnack's GPL licence.
+  - t3-*.png: t3mujinpack by João Almeida, MIT licence
+    (https://github.com/t3mujin/t3mujinpack), resampled to 64³.
+  - rt-*.png: RawTherapee film simulation HaldCLUTs by Pat David, Pavlov
+    Dmitry and Michael Ezra, via https://github.com/NatronGitHub/clut,
+    CC BY-SA 4.0; the converted files are shared under the same licence.
+  - ig-*.png: rendered from CSSgram by Una Kravets, MIT licence
+    (https://github.com/una/CSSgram).
+  - own-*.png: Flashnack's own, GPL-3.0.
+Film, filter and brand names in the look names only say what a look aims to
+resemble; no affiliation with the trademark owners is implied.
+
+The 3D camera is Flashnack's own model, built in code from published sizes and
+photos of the ONE35 V2; it leaves off Flashback's logo. The camera mode's body
+is Flashnack's own art; its layout idea comes from (Not Boring) Camera.
+
 Flashnack is not affiliated with LoFi Logic or with Flashback (joinflashback.co).
 "Flashback" and "ONE35" are names of Flashback's camera products, used here only
 to say which files Flashnack opens.
@@ -37,5 +57,7 @@ Third-party software bundled in the built app:
     wrapper's at https://github.com/ybouane/LibRaw-Wasm
   - Archivo variable font by Omnibus-Type, SIL Open Font License 1.1, via
     @fontsource-variable/archivo
+  - three.js 0.187.0 by the three.js authors, MIT licence (the 3D camera;
+    loaded only when it is shown)
 
-Development tools (not shipped): Vite, Vitest, Playwright (Apache-2.0).
+Development tools (not shipped): Vite, Vitest, Playwright (Apache-2.0), pngjs (MIT).

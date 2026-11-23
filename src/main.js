@@ -7,8 +7,9 @@ import './styles.css';
 import { Zip, ZipPassThrough } from 'fflate';
 import { Engine } from './engine.js';
 import {
-  VIBES, vibeConfigFor, defaultAdjustments, BASE_KELVIN,
+  VIBES, defaultAdjustments, BASE_KELVIN, lookConfigFor, isVibe,
 } from './config.js';
+import { FILM_LOOKS, FLASHBACK_LOOKS, POPULAR_LOOKS, SEARCH_CHIPS, filmLook, filmLutUrl, searchLooks } from './looks/catalog.js';
 import { filesFromDrop, classify, exportName, uniqueNames, download, stem } from './library.js';
 
 const $ = (id) => document.getElementById(id);
@@ -23,7 +24,7 @@ const store = {
 const S = {
   photos: [],
   cur: -1,
-  vibeId: VIBES.some((v) => v.id === store.get('vibe')) ? store.get('vibe') : 'disposable',
+  vibeId: isVibe(store.get('vibe')) || filmLook(store.get('vibe')) ? store.get('vibe') : 'disposable',
   looks: {},
   compare: false,
   zen: false,
@@ -32,8 +33,14 @@ const S = {
   exporting: null,
 };
 const savedLooks = store.get('looks', {});
-for (const v of VIBES) S.looks[v.id] = { ...vibeConfigFor(v.id), ...(savedLooks[v.id] || {}) };
-const look = () => S.looks[S.vibeId];
+const presetFor = (id) => lookConfigFor(id, filmLook(id));
+/** Settings of a look, made on first use (film looks are many, so they are made lazily). */
+function lookFor(id) {
+  if (!S.looks[id] && (isVibe(id) || filmLook(id))) S.looks[id] = { ...presetFor(id), ...(savedLooks[id] || {}) };
+  return S.looks[id];
+}
+for (const v of VIBES) lookFor(v.id);
+const look = () => lookFor(S.vibeId);
 const photo = () => S.photos[S.cur];
 
 let engine;
@@ -92,42 +99,139 @@ const syncPhotoSliders = buildSliders($('sliders'), PHOTO_SLIDERS,
 const lookValue = (d) => { const l = look(); return d.flag && !l[d.flag] ? 0 : l[d.key]; };
 const syncLookSliders = buildSliders($('look-sliders'), LOOK_SLIDERS, lookValue,
   (d, v) => { const l = look(); l[d.key] = v; if (d.flag) l[d.flag] = v > 0; onLookChanged(); },
-  (d) => { const l = look(), p = vibeConfigFor(S.vibeId); l[d.key] = p[d.key]; if (d.flag) l[d.flag] = p[d.flag]; onLookChanged(); });
+  (d) => { const l = look(), p = presetFor(S.vibeId); l[d.key] = p[d.key]; if (d.flag) l[d.flag] = p[d.flag]; onLookChanged(); });
+
+const FILM_SLIDERS = [{ key: 'film_strength_pct', label: 'Look strength', min: 0, max: 100, step: 1, fmt: (v) => `${v}%` }];
+const syncFilmSliders = buildSliders($('film-strength'), FILM_SLIDERS, (d) => look()[d.key] ?? 100,
+  (d, v) => { look()[d.key] = v; onLookChanged(); },
+  (d) => { look()[d.key] = 100; onLookChanged(); });
 
 // ---- looks -------------------------------------------------------------------------
-const lookCanvases = {};
+const lookCanvases = {};           // look id -> canvas of each original look card
+const visibleCards = new Set();    // film look cards on screen
+const cardObserver = new IntersectionObserver((entries) => {
+  let added = false;
+  for (const e of entries) {
+    if (e.isIntersecting) { if (!visibleCards.has(e.target)) { visibleCards.add(e.target); added = true; } } else visibleCards.delete(e.target);
+  }
+  if (added) renderLookCards();
+}, { rootMargin: '120px' });
+/** Canvases to draw for a render pass: the originals and the film cards on screen, grouped by look. */
+function cardCanvases() {
+  const m = new Map(VIBES.map((v) => [v.id, [lookCanvases[v.id]]]));
+  for (const el of visibleCards) {
+    if (!el.isConnected) { visibleCards.delete(el); continue; }
+    const id = el.dataset.id;
+    if (!m.has(id)) m.set(id, []);
+    m.get(id).push(el.querySelector('canvas'));
+  }
+  return m;
+}
+
+function lookCard(id, name, blurb, key) {
+  const b = document.createElement('button');
+  b.type = 'button';
+  b.className = 'look';
+  b.setAttribute('role', 'radio');
+  b.dataset.id = id;
+  const c = document.createElement('canvas');
+  c.width = 128; c.height = 96;
+  if (isVibe(id)) lookCanvases[id] = c;
+  const text = document.createElement('span');
+  text.innerHTML = '<span class="look-name"></span><span class="look-blurb"></span>';
+  text.querySelector('.look-name').textContent = name;
+  text.querySelector('.look-blurb').textContent = blurb;
+  b.append(c, text);
+  if (key) { const k = document.createElement('kbd'); k.textContent = key; b.append(k); }
+  b.addEventListener('click', () => setVibe(id));
+  return b;
+}
+
+// Group and maker, so the two Portra 400s (t3mujin, Pat David) can be told apart.
+const SOURCE_SHORT = { t3mujin: 't3mujin', rt: 'Pat David' };
+const filmBlurb = (l) => (l.source === 'flashback' ? 'Flashback app' : l.source === 'own' ? 'Flashnack era look' : l.source === 'cssgram' ? 'Instagram era'
+  : `${l.group.replace(/^\w/, (c) => c.toUpperCase())} · ${SOURCE_SHORT[l.source] || l.source}`);
+
+function filmCard(l) {
+  const b = lookCard(l.id, l.name.replace(/^Flashback /, ''), filmBlurb(l));
+  b.classList.add('look-film');
+  b.title = `${l.name} · ${l.tags.slice(0, 6).join(', ')}`;
+  if (!l.popular) {
+    const badge = document.createElement('span');
+    badge.className = 'look-badge';
+    badge.textContent = 'needs internet';
+    b.append(badge);
+  }
+  cardObserver.observe(b);
+  return b;
+}
+
+const RESULTS_PAGE = 40;
+let resultsShown = RESULTS_PAGE;
+function showResults() {
+  const q = $('look-search').value;
+  const list = $('look-results');
+  for (const c of list.children) { cardObserver.unobserve(c); visibleCards.delete(c); }
+  list.textContent = '';
+  const found = q.trim() ? searchLooks(q) : [];
+  $('look-count').textContent = q.trim() ? (found.length ? `${found.length} look${found.length === 1 ? '' : 's'}` : 'Nothing found. Try y2k, 80s, polaroid or portra.') : '';
+  for (const l of found.slice(0, resultsShown)) list.append(filmCard(l));
+  $('look-more').hidden = found.length <= resultsShown;
+  for (const c of document.querySelectorAll('.look-chip')) c.setAttribute('aria-pressed', String(c.dataset.q === q.trim()));
+  markLook();
+  markOffline();
+}
+
+/** On a connection loss, mark looks that are neither bundled nor already cached. */
+async function markOffline() {
+  const offline = !navigator.onLine;
+  app.classList.toggle('is-offline', offline);
+  if (!offline || !('caches' in window)) return;
+  for (const b of document.querySelectorAll('.look-film')) {
+    if (filmLook(b.dataset.id)?.popular) continue;
+    const hit = await caches.match(filmLutUrl(b.dataset.id)).catch(() => null);
+    b.classList.toggle('look-cached', !!hit);
+  }
+}
+
 function buildLooks() {
   const box = $('looks');
-  VIBES.forEach((v, i) => {
-    const b = document.createElement('button');
-    b.type = 'button';
-    b.className = 'look';
-    b.setAttribute('role', 'radio');
-    b.dataset.id = v.id;
-    const c = document.createElement('canvas');
-    c.width = 128; c.height = 96;
-    lookCanvases[v.id] = c;
-    const text = document.createElement('span');
-    text.innerHTML = '<span class="look-name"></span><span class="look-blurb"></span>';
-    text.querySelector('.look-name').textContent = v.name;
-    text.querySelector('.look-blurb').textContent = v.blurb;
-    const k = document.createElement('kbd');
-    k.textContent = String(i + 1);
-    b.append(c, text, k);
-    b.addEventListener('click', () => setVibe(v.id));
-    box.append(b);
-  });
+  VIBES.forEach((v, i) => box.append(lookCard(v.id, v.name, v.blurb, String(i + 1))));
+  for (const l of FLASHBACK_LOOKS) $('looks-flashback').append(filmCard(l));
+  for (const l of POPULAR_LOOKS.filter((x) => x.group !== 'flashback')) $('looks-popular').append(filmCard(l));
+  const search = $('look-search');
+  search.placeholder = `Search ${FILM_LOOKS.length} looks: y2k, 80s, polaroid…`;
+  let t = 0;
+  search.addEventListener('input', () => { clearTimeout(t); t = setTimeout(() => { resultsShown = RESULTS_PAGE; showResults(); }, 120); });
+  for (const chip of SEARCH_CHIPS) {
+    const c = document.createElement('button');
+    c.type = 'button';
+    c.className = 'look-chip';
+    c.dataset.q = chip;
+    c.textContent = chip;
+    c.addEventListener('click', () => { search.value = search.value.trim() === chip ? '' : chip; resultsShown = RESULTS_PAGE; showResults(); });
+    $('look-chips').append(c);
+  }
+  $('look-more').addEventListener('click', () => { resultsShown += RESULTS_PAGE; showResults(); });
+  window.addEventListener('online', markOffline);
+  window.addEventListener('offline', markOffline);
+  // A film look picked last time that is not on screen yet: show it in the results.
+  if (filmLook(S.vibeId) && !filmLook(S.vibeId).popular) { search.value = filmLook(S.vibeId).name; showResults(); }
   markLook();
 }
 function markLook() {
-  for (const b of $('looks').children) b.setAttribute('aria-checked', String(b.dataset.id === S.vibeId));
+  for (const b of document.querySelectorAll('#controls .look')) b.setAttribute('aria-checked', String(b.dataset.id === S.vibeId));
+  const film = !!filmLook(S.vibeId);
+  $('film-strength').hidden = !film;
+  $('look-current').textContent = film ? `${filmLook(S.vibeId).name}` : '';
 }
 function setVibe(id) {
-  if (!S.looks[id] || id === S.vibeId) return;
+  if (!lookFor(id) || id === S.vibeId) return;
   S.vibeId = id;
   store.set('vibe', id);
   markLook();
   syncLookSliders();
+  syncFilmSliders();
   onLookChanged(false);
 }
 
@@ -186,7 +290,8 @@ function updateCounts() {
   $('count').textContent = S.photos.length ? `${S.photos.length} ${S.photos.length === 1 ? 'photo' : 'photos'} in this roll` : '';
 }
 
-async function addFiles(files) {
+/** opts.adj: starting adjustments for these photos (camera mode passes its exposure). */
+async function addFiles(files, opts = {}) {
   if (!files.length) return;
   const { photos, zips, skipped } = await classify(files);
   for (const z of zips) {
@@ -205,7 +310,7 @@ async function addFiles(files) {
   const start = S.photos.length;
   for (const src of photos) {
     const p = {
-      ...src, id: nextId++, adj: defaultAdjustments(), include: true, status: 'loading',
+      ...src, id: nextId++, adj: { ...defaultAdjustments(), ...(opts.adj || {}) }, include: true, status: 'loading',
       isV1: src.kind === 'v1', isJpeg: !!src.isJpeg, seed: (Math.random() * 2 ** 31) | 0,
       small: null, smallImg: { develop: null, baked: null, bakedKey: null, isJpeg: !!src.isJpeg },
     };
@@ -393,7 +498,15 @@ function renderLookCards() {
   cardsTimer = setTimeout(() => {
     const p = photo();
     if (!p || p.status !== 'ready') return;
-    for (const v of VIBES) thumbChain = thumbChain.then(() => drawSmall(p, S.looks[v.id], p.adj, lookCanvases[v.id]).catch(() => {}));
+    // The five originals, then the film looks on screen (not all of them).
+    for (const [id, canvases] of cardCanvases()) {
+      thumbChain = thumbChain.then(async () => {
+        const live = canvases.filter((c) => c.isConnected);
+        if (!live.length) return;
+        await drawSmall(p, lookFor(id), p.adj, live[0]);
+        for (const c of live.slice(1)) { c.width = live[0].width; c.height = live[0].height; c.getContext('2d').drawImage(live[0], 0, 0); }
+      }).catch(() => {});
+    }
   }, 120);
 }
 
@@ -407,11 +520,13 @@ function onPhotoChanged(p) {
 let allThumbsTimer = 0;
 function onLookChanged(save = true) {
   if (save) {
-    const diff = {};
-    for (const v of VIBES) {
-      const preset = vibeConfigFor(v.id), cur = S.looks[v.id], d = {};
+    // Start from what was saved, so tweaks to looks not opened this time are kept.
+    const diff = { ...savedLooks };
+    for (const [id, cur] of Object.entries(S.looks)) {
+      const preset = presetFor(id), d = {};
       for (const k of Object.keys(cur)) if (cur[k] !== preset[k]) d[k] = cur[k];
-      if (Object.keys(d).length) diff[v.id] = d;
+      if (Object.keys(d).length) diff[id] = d; else delete diff[id];
+      savedLooks[id] = diff[id];
     }
     store.set('looks', diff);
   }
@@ -670,20 +785,118 @@ function setupInput() {
     onPhotoChanged(p);
   });
   $('reset-look').addEventListener('click', () => {
-    S.looks[S.vibeId] = vibeConfigFor(S.vibeId);
+    S.looks[S.vibeId] = presetFor(S.vibeId);
     syncLookSliders();
+    syncFilmSliders();
     onLookChanged();
   });
+}
+
+// ---- the ONE35 V2 in 3D -----------------------------------------------------------------
+const hasWebGL = (() => { try { return !!document.createElement('canvas').getContext('webgl2'); } catch { return false; } })();
+let cam3dModule = null;
+const loadCam3d = () => (cam3dModule ||= import('./camera3d/viewer.js'));
+
+function setupCamera3D() {
+  const mini = $('cam3d-mini'), dialog = $('cam3d');
+  if (!hasWebGL) { mini.hidden = true; return; }
+  let colourway = store.get('colourway', 'black-yellow');
+  // Load three.js once the page is idle, then show the camera spinning on the empty screen.
+  const idle = window.requestIdleCallback || ((f) => setTimeout(f, 300));
+  idle(async () => {
+    try {
+      const { mountCamera3D } = await loadCam3d();
+      S.cam3dMini = mountCamera3D(mini, { colourway, autoRotate: true, zoom: false });
+    } catch (e) { console.warn('[flashnack] 3D camera unavailable:', e); mini.hidden = true; }
+  });
+  let downAt = null;
+  mini.addEventListener('pointerdown', (e) => { downAt = { x: e.clientX, y: e.clientY }; });
+  mini.addEventListener('click', (e) => {
+    const moved = downAt && e.detail && Math.hypot(e.clientX - downAt.x, e.clientY - downAt.y) > 5;
+    downAt = null;
+    if (!moved) open();
+  });
+
+  let full = null;
+  const help = dialog.querySelector('.cam3d-help'), helpText = help.textContent;
+  async function open() {
+    const { mountCamera3D, COLOURWAYS } = await loadCam3d();
+    const box = $('cam3d-colours');
+    if (!box.children.length) {
+      for (const c of COLOURWAYS) {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'swatch';
+        b.setAttribute('role', 'radio');
+        b.title = c.name;
+        b.setAttribute('aria-label', c.name);
+        b.dataset.id = c.id;
+        b.style.setProperty('--a', c.body);
+        b.style.setProperty('--b', c.band);
+        if (c.crystal) b.classList.add('swatch-crystal');
+        b.addEventListener('click', () => {
+          colourway = c.id;
+          store.set('colourway', colourway);
+          full?.setColourway(colourway);
+          S.cam3dMini?.setColourway(colourway);
+          for (const x of box.children) x.setAttribute('aria-checked', String(x.dataset.id === colourway));
+        });
+        box.append(b);
+      }
+    }
+    for (const x of box.children) x.setAttribute('aria-checked', String(x.dataset.id === colourway));
+    help.textContent = helpText;
+    dialog.showModal();
+    full = mountCamera3D($('cam3d-stage'), { colourway, interactive: true, onStatus: (t) => { help.textContent = t; } });
+    S.cam3dFull = full;
+  }
+  dialog.addEventListener('close', () => { full?.dispose(); full = null; S.cam3dFull = null; });
+  $('cam3d-close').addEventListener('click', () => dialog.close());
+  dialog.addEventListener('click', (e) => { if (e.target === dialog) dialog.close(); });
+  S.openCamera3D = open;
+}
+
+// ---- camera mode ------------------------------------------------------------------------
+function setupShoot() {
+  let open = false;
+  async function start() {
+    if (open) return;
+    open = true;
+    try {
+      const { openShoot } = await import('./camera2d/shoot.js');
+      const looks = [
+        { id: '', name: 'Natural (no film look)', url: null },
+        ...FLASHBACK_LOOKS, ...POPULAR_LOOKS.filter((l) => l.group !== 'flashback'),
+      ].map((l) => ({ id: l.id, name: l.name, url: l.url === null ? null : filmLutUrl(l.id) }));
+      const current = filmLook(S.vibeId) ? S.vibeId : 'fb-dispo';
+      openShoot({
+        root: $('shoot-view'), looks,
+        lookId: looks.some((l) => l.id === current) ? current : 'fb-dispo',
+        colourway: store.get('colourway', 'black-yellow'),
+        onDone: (files, { lookId, ev }) => {
+          open = false;
+          if (lookId) setVibe(lookId);
+          if (files.length) { addFiles(files, { adj: ev ? { exposure_ev: ev } : {} }); toast(`Developing ${files.length} photo${files.length === 1 ? '' : 's'}`); }
+        },
+      });
+    } catch (e) { open = false; console.error(e); toast(`Camera mode failed: ${e.message}`); }
+  }
+  $('shoot').addEventListener('click', start);
+  $('shoot-empty').addEventListener('click', start);
+  S.openShoot = start;
 }
 
 // ---- start ----------------------------------------------------------------------------
 async function start() {
   buildLooks();
   syncLookSliders();
+  syncFilmSliders();
   syncPhotoSliders();
   setupInput();
   setupKeys();
   setupViewer();
+  setupCamera3D();
+  setupShoot();
   updateCounts();
   try {
     engine = await Engine.create({ cpu: new URLSearchParams(location.search).has('cpu') });
@@ -696,6 +909,10 @@ async function start() {
   engine.attach(canvas);
   if (engine.gpu) engine.gpu.device.lost.then(() => toast('The graphics card stopped responding. Reload the page to continue.', 15000));
   else note('No WebGPU in this browser: rendering on the CPU, which is slower.');
-  window.flashnack = { S, engine, addFiles, select, setVibe, exportRoll };
+  window.flashnack = { S, engine, addFiles, select, setVibe, exportRoll, searchLooks };
+  // Offline: keep the app and the popular looks once the page has loaded.
+  if (import.meta.env.PROD && 'serviceWorker' in navigator && location.protocol !== 'file:') {
+    navigator.serviceWorker.register('./sw.js').catch((e) => console.warn('[flashnack] no offline support:', e));
+  }
 }
 start();

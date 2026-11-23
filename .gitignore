@@ -10,3 +10,8 @@ playwright-report/
 *.dng
 *.DNG
 .vercel
+
+# LUT sources (scripts/build-luts.mjs downloads them here)
+.lut-src/
+# macOS metadata files on exFAT drives
+._*

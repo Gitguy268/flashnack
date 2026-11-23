@@ -48,6 +48,7 @@ export class CpuBackend {
     for (let i = 0; i < table.length; i++) f[i] = table[i] / 65535;
     this.luts.set(id, { t: f, n: size });
   }
+  dropLut(id) { this.luts.delete(id); }
   setGrainTiles(tiles) { this.tiles = tiles; }
 
   bake(img, vibe, rotation) { this._develop = img.develop; bakeFrame(this, img, vibe, rotation); }
@@ -279,6 +280,16 @@ export class CpuBackend {
         d[i + c] = v;
       }
     });
+  }
+
+  /** Display LUT (sRGB in and out) blended with the input by strength 0..1. */
+  displayLut(f, id, strength) {
+    const clamped = map(f, (s, d, i) => { for (let c = 0; c < 3; c++) d[i + c] = clampi(s[i + c], 0, 1); });
+    const out = this.lutStage(clamped, id);
+    if (strength >= 1) return out;
+    const a = clamped.data, o = out.data;
+    for (let i = 0; i < o.length; i += 4) for (let c = 0; c < 3; c++) o[i + c] = a[i + c] + (o[i + c] - a[i + c]) * strength;
+    return out;
   }
 
   tone(f) {

@@ -48,6 +48,23 @@ On 2026-11-09 the four sample DNGs matched within 1e-5 (max absolute error, 0..1
 
 The first run after starting `npm run dev` can be cut off by Vite reloading the page once ("Execution context was destroyed"); run it again.
 
+## Film looks
+
+The film looks in `public/luts/look/` and the catalog in `src/looks/catalog.json` are generated. To rebuild them:
+
+```bash
+mkdir -p .lut-src/flashback && cd .lut-src
+git clone --depth 1 https://github.com/t3mujin/t3mujinpack.git
+git clone --depth 1 https://github.com/NatronGitHub/clut.git
+git clone --depth 1 https://github.com/una/CSSgram.git
+cd ..
+# copy the Flashback app's *.lut.png files into .lut-src/flashback/
+npm run luts:cssgram   # renders the CSSgram filters in Playwright's Chromium
+npm run luts:build     # converts everything to 64³ tile PNGs and writes the catalog
+```
+
+To add one of your own era looks, add an entry to `scripts/era-looks.mjs` (a function from sRGB to sRGB) and run `npm run luts:build`. To bundle a look for offline use, add its id to `POPULAR` in `scripts/build-luts.mjs`. Only add LUTs whose licence allows sharing them, and list the source in `public/luts/LICENSES/README.md` and `NOTICE`.
+
 ## Licence
 
 Flashnack is GPL-3.0, like LoFi Logic. By contributing you agree that your contribution is licensed the same way. Ported files keep a header naming the upstream file and the change; keep that up to date when you change one. New dependencies need a GPL-3.0-compatible licence and a line in `NOTICE`.

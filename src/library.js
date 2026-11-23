@@ -5,7 +5,7 @@
 // Lucas Van De Weerd: JavaScript port, the V1 roll token is a SHA-256 prefix
 // (upstream uses BLAKE2s) because browsers have no BLAKE2.
 
-import { VIBE_EXPORT_SUFFIX } from './config.js';
+import { lookExportSuffix } from './config.js';
 
 const RAW_EXT = new Set(['cr2', 'cr3', 'crw', 'nef', 'nrw', 'arw', 'srf', 'sr2', 'raf', 'orf', 'rw2', 'pef', 'srw', '3fr', 'erf', 'kdc', 'dcr', 'mrw', 'x3f', 'iiq', 'rwl', 'mef', 'mos']);
 const IMG_EXT = new Set(['jpg', 'jpeg', 'png', 'webp', 'heic', 'heif', 'avif']);
@@ -95,7 +95,7 @@ export async function exportBasename(photo) {
 }
 
 export async function exportName(photo, vibeId) {
-  return `${await exportBasename(photo)}_${VIBE_EXPORT_SUFFIX[vibeId] || 'edit'}.jpg`;
+  return `${await exportBasename(photo)}_${lookExportSuffix(vibeId) || 'edit'}.jpg`;
 }
 
 /** Make names unique within one export ("a.jpg", "a-2.jpg"). */
