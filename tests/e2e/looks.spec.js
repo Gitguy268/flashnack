@@ -134,3 +134,20 @@ test('the ONE35 V2 turns, shoots and changes colour in 3D', async ({ page }) => 
   await expect(page.locator('#cam3d')).toBeHidden();
   expect(errors).toEqual([]);
 });
+
+test('the offline copy comes back if another app on the same site clears the caches', async ({ page, context }) => {
+  const errors = await open(page);
+  await page.evaluate(() => navigator.serviceWorker.ready);
+  await page.waitForFunction(async () => !!(await caches.match('./luts/look/fb-gold.png')), null, { timeout: 60_000 });
+  // What another app's service worker might do on its own update.
+  await page.evaluate(async () => { for (const k of await caches.keys()) await caches.delete(k); });
+  await page.reload();
+  await page.waitForFunction(async () => !!(await caches.match('./luts/look/fb-gold.png')) && !!(await caches.match('./samples/snow-field.jpg')), null, { timeout: 60_000 });
+  await context.setOffline(true);
+  await page.reload();
+  await page.waitForFunction(() => window.flashnack);
+  await samples(page);
+  await page.click('#looks-flashback [data-id="fb-gold"]');
+  await context.setOffline(false);
+  expect(errors).toEqual([]);
+});

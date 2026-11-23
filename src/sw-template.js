@@ -9,13 +9,14 @@ const CACHE = '__CACHE__';
 const PRECACHE = __PRECACHE__;
 const LOOKS_CACHE = 'flashnack-looks-v1';
 
+async function precache() {
+  const c = await caches.open(CACHE);
+  // One by one, so a single failure doesn't throw the rest away.
+  await Promise.all(PRECACHE.map((u) => c.add(new Request(u, { cache: 'reload' })).catch((err) => console.warn('[flashnack sw]', u, err))));
+}
+
 self.addEventListener('install', (e) => {
-  e.waitUntil((async () => {
-    const c = await caches.open(CACHE);
-    // One by one, so a single failure doesn't throw the rest away.
-    await Promise.all(PRECACHE.map((u) => c.add(new Request(u, { cache: 'reload' })).catch((err) => console.warn('[flashnack sw]', u, err))));
-    await self.skipWaiting();
-  })());
+  e.waitUntil(precache().then(() => self.skipWaiting()));
 });
 
 self.addEventListener('activate', (e) => {
@@ -32,6 +33,10 @@ self.addEventListener('fetch', (e) => {
   if (url.origin !== location.origin) return;
   // The page itself: network first, so a new version shows up; the cache when offline.
   if (req.mode === 'navigate') {
+    // Apps on the same origin (several share github.io) may clear every cache
+    // but their own; if that happened, fill ours again while online.
+    const refill = caches.has(CACHE).then((ok) => (ok ? null : precache())).catch(() => {});
+    e.waitUntil(refill);
     e.respondWith((async () => {
       try {
         const res = await fetch(req);
